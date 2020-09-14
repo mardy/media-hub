@@ -458,12 +458,7 @@ bool gstreamer::Engine::play(bool use_main_thread /* = false */)
 {
     const auto result = d->playbin.set_state_and_wait(GST_STATE_PLAYING, use_main_thread);
 
-    if (result)
-    {
-        d->state = media::Engine::State::playing;
-        MH_INFO("Engine: playing uri: %s", d->playbin.uri());
-        d->playback_status_changed(media::Player::PlaybackStatus::playing);
-    }
+    MH_INFO("Engine: playing uri: %s", d->playbin.uri());
 
     return result;
 }
