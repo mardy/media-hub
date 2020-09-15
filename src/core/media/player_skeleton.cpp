@@ -339,6 +339,7 @@ struct media::PlayerSkeleton::Private
 
             video_dimension_changed.connect([remote_video_dimension_changed](const media::video::Dimensions& dimensions)
             {
+                MH_DEBUG("emit D-Bus signal for dimensions");
                 remote_video_dimension_changed->emit(dimensions);
             });
 

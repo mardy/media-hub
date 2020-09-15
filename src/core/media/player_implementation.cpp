@@ -34,6 +34,7 @@
 #include "gstreamer/engine.h"
 
 #include "core/media/logger/logger.h"
+#include <gio/gio.h>
 
 #include <memory>
 #include <exception>
@@ -126,7 +127,7 @@ struct media::PlayerImplementation<Parent>::Private :
          */
         return [this](const Engine::State& state)
         {
-            MH_DEBUG("Setting state for parent: %s", parent);
+            MH_DEBUG("Setting state for parent: %s in thread %p", parent, g_thread_self());
             switch(state)
             {
             case Engine::State::ready:

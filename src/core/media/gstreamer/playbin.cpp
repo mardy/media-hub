@@ -104,6 +104,7 @@ const std::string& gstreamer::Playbin::pipeline_name()
 
 void gstreamer::Playbin::about_to_finish(GstElement*, gpointer user_data)
 {
+    MH_DEBUG("received on thread %p", g_thread_self());
     auto thiz = static_cast<Playbin*>(user_data);
     thiz->signals.about_to_finish();
 }
@@ -150,6 +151,7 @@ gstreamer::Playbin::Playbin(const core::ubuntu::media::Player::PlayerKey key_in)
     if (!pipeline)
         throw std::runtime_error("Could not create pipeline for playbin.");
 
+    MH_DEBUG("Constructor called on thread %p", g_thread_self());
     // Add audio and/or video sink elements depending on environment variables
     // being set or not set
     setup_pipeline_for_audio_video();
@@ -330,6 +332,7 @@ void gstreamer::Playbin::on_new_message_async(const Bus::Message& message)
         signals.on_info(message.detail.error_warning_info);
         break;
     case GST_MESSAGE_STATE_CHANGED:
+        MH_DEBUG("source %s, state %s", message.source, gst_element_state_get_name(message.detail.state_changed.new_state));
         if (message.source == "playbin") {
             g_object_get(G_OBJECT(pipeline), "current-audio", &audio_stream_id, NULL);
             g_object_get(G_OBJECT(pipeline), "current-video", &video_stream_id, NULL);
@@ -364,10 +367,14 @@ void gstreamer::Playbin::on_new_message_async(const Bus::Message& message)
         }
         break;
     case GST_MESSAGE_EOS:
+        MH_DEBUG("############################### received EOS #######################");
         signals.on_end_of_stream();
         break;
     case GST_MESSAGE_BUFFERING:
         signals.on_buffering_changed(message.detail.buffering.percent);
+        break;
+    case GST_MESSAGE_PROGRESS:
+        MH_DEBUG("Got A PROGRESS MESSAGE ===============");
         break;
     default:
         break;
@@ -528,6 +535,7 @@ void gstreamer::Playbin::set_uri(
     const core::ubuntu::media::Player::HeadersType& headers = core::ubuntu::media::Player::HeadersType(),
     bool do_pipeline_reset)
 {
+    MH_DEBUG("thread %p", g_thread_self());
     gchar *current_uri = nullptr;
     g_object_get(pipeline, "current-uri", &current_uri, NULL);
 
@@ -597,6 +605,7 @@ std::string gstreamer::Playbin::uri() const
 gboolean gstreamer::Playbin::set_state_in_main_thread(gpointer user_data)
 {
     MH_TRACE("");
+    MH_DEBUG("thread %p", g_thread_self());
     auto thiz = static_cast<Playbin*>(user_data);
     if (thiz and thiz->pipeline)
         gst_element_set_state(thiz->pipeline, thiz->current_new_state);
@@ -606,6 +615,7 @@ gboolean gstreamer::Playbin::set_state_in_main_thread(gpointer user_data)
 }
 bool gstreamer::Playbin::set_state_and_wait(GstState new_state, bool use_main_thread)
 {
+    MH_DEBUG("thread %p", g_thread_self());
     static const std::chrono::nanoseconds state_change_timeout
     {
         // We choose a quite high value here as tests are run under valgrind
@@ -654,6 +664,7 @@ bool gstreamer::Playbin::set_state_and_wait(GstState new_state, bool use_main_th
         }
     }
 
+    MH_DEBUG("Setting play status returned %d ####################", result);
     // We only should query the pipeline if we actually succeeded in
     // setting the requested state.
     if (result && new_state == GST_STATE_PLAYING)
@@ -685,6 +696,7 @@ bool gstreamer::Playbin::set_state_and_wait(GstState new_state, bool use_main_th
 
 bool gstreamer::Playbin::seek(const std::chrono::microseconds& ms)
 {
+    MH_DEBUG("                            Asked to seek to %d", ms.count());
     is_seeking = true;
     return gst_element_seek_simple(
                 pipeline,

@@ -62,8 +62,10 @@ struct gstreamer::Engine::Private
             return media::Player::PlaybackStatus::ready;
         else if (state.new_state == GST_STATE_NULL)
             return media::Player::PlaybackStatus::null;
-        else
+        else {
+            MH_DEBUG("                                                         GST state is unknown, setting to STOPPED");
             return media::Player::PlaybackStatus::stopped;
+        }
     }
 
     void on_playbin_state_changed(const std::pair<gstreamer::Bus::Message::Detail::StateChanged,std::string>& p)
@@ -84,6 +86,7 @@ struct gstreamer::Engine::Private
                 const media::Player::Error e = media::Player::Error::format_error;
                 error(e);
             } else {
+                MH_DEBUG("sending playback statys changed");
                 playback_status_changed(status);
             }
         }
@@ -161,7 +164,7 @@ struct gstreamer::Engine::Private
             switch (ewi.error->code)
             {
             case GST_STREAM_ERROR_FAILED:
-                MH_ERROR("** Encountered a GST_STREAM_ERROR_FAILED");
+                MH_ERROR("** Encountered a GST_STREAM_ERROR_FAILED: %s", ewi.error->message);
                 ret_error = media::Player::Error::resource_error;
                 break;
             case GST_STREAM_ERROR_CODEC_NOT_FOUND:
@@ -244,6 +247,7 @@ struct gstreamer::Engine::Private
 
     void on_about_to_finish()
     {
+        MH_DEBUG("About to finish");
         state = Engine::State::ready;
         about_to_finish();
     }
@@ -438,6 +442,7 @@ const core::Property<media::Engine::State>& gstreamer::Engine::state() const
 bool gstreamer::Engine::open_resource_for_uri(const media::Track::UriType& uri,
                                               bool do_pipeline_reset)
 {
+    MH_DEBUG("Calling set_uri from open res");
     d->playbin.set_uri(uri, core::ubuntu::media::Player::HeadersType{}, do_pipeline_reset);
     return true;
 }
@@ -445,6 +450,7 @@ bool gstreamer::Engine::open_resource_for_uri(const media::Track::UriType& uri,
 bool gstreamer::Engine::open_resource_for_uri(const media::Track::UriType& uri,
                                               const core::ubuntu::media::Player::HeadersType& headers)
 {
+    MH_DEBUG("Calling set_uri from open res with headers");
     d->playbin.set_uri(uri, headers);
     return true;
 }

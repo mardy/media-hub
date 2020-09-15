@@ -20,6 +20,7 @@
 #define GSTREAMER_BUS_H_
 
 #include <core/property.h>
+#include "core/media/logger/logger.h"
 
 #include <gst/gst.h>
 
@@ -58,6 +59,8 @@ public:
                             msg,
                             &detail.error_warning_info.error,
                             &detail.error_warning_info.debug);
+                MH_DEBUG ("ERROR from element %s: %s\n", GST_OBJECT_NAME (msg->src), detail.error_warning_info.error->message);
+       MH_DEBUG ("Debugging info: %s\n", (detail.error_warning_info.debug) ? detail.error_warning_info.debug : "none");
                 cleanup = [this]()
                 {
                     g_error_free(detail.error_warning_info.error);
@@ -70,6 +73,8 @@ public:
                             msg,
                             &detail.error_warning_info.error,
                             &detail.error_warning_info.debug);
+                MH_DEBUG ("ERROR from element %s: %s\n", GST_OBJECT_NAME (msg->src), detail.error_warning_info.error->message);
+       MH_DEBUG ("Debugging info: %s\n", (detail.error_warning_info.debug) ? detail.error_warning_info.debug : "none");
                 cleanup = [this]()
                 {
                     g_error_free(detail.error_warning_info.error);
@@ -275,6 +280,7 @@ public:
     {
         (void) bus;
 
+        //MH_DEBUG("thread %p", g_thread_self());
         auto thiz = static_cast<Bus*>(data);
         Message message(msg);
         if (message.type == GST_MESSAGE_TAG || message.type == GST_MESSAGE_ASYNC_DONE)
@@ -290,6 +296,7 @@ public:
     {
         (void) bus;
 
+        //MH_DEBUG("thread %p", g_thread_self());
         auto thiz = static_cast<Bus*>(data);
         Message message(msg);
         thiz->on_new_message_async(message);
